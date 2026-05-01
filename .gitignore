@@ -1,0 +1,32 @@
+# Environment and IDE
+.env
+.vscode/
+
+# Python cache and bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+venv/
+
+# Logs and process files
+*.log
+process.log
+indexing_process.log
+Indexing_log.txt
+DoclingParsing_Log/
+
+# Chat history
+chat_history/
+
+# Ignore all ingestion outputs
+Ingestion_Results/
+
+# But keep Final_Indexing.json
+!Ingestion_Results/Indexing_Results/
+!Ingestion_Results/Indexing_Results/Final_Indexing.json
+
+# Debug verification
+debug_verification/
