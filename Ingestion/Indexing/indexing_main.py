@@ -2,6 +2,7 @@ import os
 import subprocess
 import logging
 import sys
+from pathlib import Path
 
 # --- LOGGER SETUP ---
 logging.basicConfig(
@@ -66,18 +67,25 @@ def main():
 
 
       # --- PATH DEFINITIONS ---
-    CONTENT = "Results/structured/html"
+    CONTENT_HTML = "Ingestion_Results/Parsing_Results/structured/html"
     MARKDOWN_DIR = "Results/markdown"
-    ASCII_TOC_PATH = "Indexing_Results/Markdown_to_ASCII_TOC.txt"
-    TOC_SKELETON_JSON = "Indexing_Results/TOC_to_Indexing.json"
-    PAGE_CONTENT_JSON = "Indexing_Results/page_indexing.json"
-    FINAL_OUTPUT = "Indexing_Results/final_indexing.json"
+    EXTRACTED_TEXT_DIR = "debug_verification/extracted_text"
+
+
+    INDEXING_DIR = Path("Ingestion_Results/Indexing_Results")
+    INDEXING_DIR.mkdir(parents=True, exist_ok=True)
+
+
+    ASCII_TOC_PATH = str(INDEXING_DIR / "Markdown_to_ASCII_TOC.txt")
+    TOC_SKELETON_JSON = str(INDEXING_DIR / "TOC_to_Indexing.json")
+    PAGE_CONTENT_JSON = str(INDEXING_DIR / "page_indexing.json")
+    FINAL_OUTPUT = str(INDEXING_DIR / "final_indexing.json")
 
     # --- EXECUTION FLOW ---
 
     # STEP 1: Content Extraction
     # Needs: Input HTML folder, Output JSON path, and the TOC pages to skip
-    if not run_step("Ingestion/Indexing/semantic_page_extractor.py", CONTENT, PAGE_CONTENT_JSON, toc_input):
+    if not run_step("Ingestion/Indexing/semantic_page_extractor.py", CONTENT_HTML, PAGE_CONTENT_JSON, toc_input):
         sys.exit(1)
 
     # STEP 2: Markdown TOC
@@ -91,7 +99,11 @@ def main():
     if not run_step("Ingestion/Indexing/toc_indexing.py", ASCII_TOC_PATH, TOC_SKELETON_JSON):
         sys.exit(1)
 
-    # STEP 4: Final Aggregation
+    # STEP 4: ROOT NODE SUMMARY
+    if not run_step("Ingestion/Indexing/root_node_summary.py", PAGE_CONTENT_JSON, CONTENT_HTML, EXTRACTED_TEXT_DIR, FINAL_OUTPUT):
+        sys.exit(1)
+
+    # STEP 5: Final Aggregation
     # Needs: The individual page data, the skeleton hierarchy, and the final filename
     if not run_step("Ingestion/Indexing/Indexing_aggregator.py", PAGE_CONTENT_JSON, TOC_SKELETON_JSON, FINAL_OUTPUT):
         sys.exit(1)
