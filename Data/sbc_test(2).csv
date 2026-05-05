@@ -1,0 +1,3 @@
+Page,Difficulty,Question,Actual_Answer(Y_A),Predicted_Answer(Y_P),Input_Tokens,,,,,,,,Output_Tokens,,,,,,,,Total Time,"Evaluation(True =1,False=0)"
+,,,,,domain_summary,query_rewrite,relevance_check,query_classification,choose_root,choose_child,extract_answer,synthesize_answer,domain_summary,query_rewrite,relevance_check,query_classification,choose_root,choose_child,extract_answer,synthesize_answer,,
+1,Simple,What is the individual deductible?,$500,,,,,,,,,,,,,,,,,,,

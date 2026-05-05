@@ -246,7 +246,7 @@ class ExplainableTreeRAG:
 
     def choose_root(self, roots: List[Dict], intent: str) -> Dict:
         options = [
-            {"id": i, "title": r.get("title", ""), "summary": (r.get("content") or "")[:300]}
+            {"id": i, "title": r.get("title", ""), "summary": (r.get("content") or "")[:2000]}
             for i, r in enumerate(roots)
         ]
         prompt = f"""Select the best ROOT section whose subtopics are most likely to answer this intent.
@@ -254,16 +254,19 @@ class ExplainableTreeRAG:
 
 
         Scoring guide (be strict and realistic):
-            0.8-1.0: This root's subtopics directly match the intent topic
-            0.5-0.7: Loosely related, subtopics might contain the answer
-            0.1-0.4: Unlikely to contain the answer
+            0.9–1.0: Title AND summary directly and specifically answer the intent
+            0.7–0.8: Strongly related, content likely contains a partial or full answer
+            0.4–0.6: Indirect or uncertain relevance
+            0.1–0.3: Very unlikely
             0.0: Completely unrelated
 
         IMPORTANT:
-        - root node contains topic wise summary of its child nodes, so evaluate the root's content as well as the title 
-        - Score based on whether SUBTOPICS under this root will answer the intent
-        - Do NOT give 0.9 just because a title partially matches
-        - Scores must reflect actual relevance, not title similarity alone
+            - The root node already contains its child node titles and summaries. Each child summary explains what that child section is about.
+            - Read both the child title and its summary carefully before scoring.
+            - Do not give a high score just because the title looks similar — the summary must confirm relevance.
+            - The best match must score meaningfully higher than other options.
+            - Your reason must reference specific content in the child summary that matches the query.
+
 
         Return ONLY valid JSON:
         {{"index": <number>, "confidence": <float between 0.0 and 1.0>, "reason": "explain why this root's subtopics likely answer the intent"}}
@@ -316,7 +319,7 @@ class ExplainableTreeRAG:
             return None
         
         options = [
-            {"id": i, "title": c.get("title", ""), "summary": (c.get("content") or "")[:300]}
+            {"id": i, "title": c.get("title", ""), "summary": (c.get("content") or "")[:2500]}
             for i, c in enumerate(children)
         ]
         prompt = f"""Select the best CHILD section that most directly answers this intent.
@@ -521,7 +524,8 @@ class ExplainableTreeRAG:
         # --- COST TRACKING OUTPUT ---
         print("\n--- QUERY COST SUMMARY ---")
         print(self.cost_tracker.get_report())
-        self.cost_tracker.reset()
+
+        #self.cost_tracker.reset()
         
         return {
             "query_id": qid,

@@ -1,0 +1,32 @@
+Page,Difficulty,Question,Actual_Answer(Y_A),Predicted_Answer(Y_P),Input_Tokens,Input_Tokens,Input_Tokens,Input_Tokens,Input_Tokens,Input_Tokens,Input_Tokens,Input_Tokens,Output_Tokens,Output_Tokens,Output_Tokens,Output_Tokens,Output_Tokens,Output_Tokens,Output_Tokens,Output_Tokens,Total Time,"Evaluation(True =1,False=0)"
+,,,,,domain_summary,query_rewrite,relevance_check,query_classification,choose_root,choose_child,extract_answer,synthesize_answer,domain_summary,query_rewrite,relevance_check,query_classification,choose_root,choose_child,extract_answer,synthesize_answer,,
+1,Simple,What is the individual deductible?,$500,$500,149,212,234,73,324,3164,2648,,51,7,22,7,146,62,3,,3.736,0
+1,Simple,What is the family deductible?,"$1,000","$1,000",,227,234,73,324,3164,2648,,,7,20,7,57,55,5,,7.548,0
+1,Simple,Are preventive services covered before meeting the deductible?,Yes,"Yes, preventive care and primary care services are covered before you meet your deductible. This plan covers some items and services even if you haven't yet met the deductible amount. For example, this plan covers certain preventive services without cost sharing and before you meet your deductible.",,250,240,79,330,3170,2654,,,13,20,7,71,97,54,,33.895,0
+1,Mid,What specific deductibles apply to prescription drugs and occupational therapy?,$300 each,"The retrieved facts do not specifically mention deductibles for prescription drugs. However, for occupational therapy, the deductible is $300. Additionally, the combined medical deductible is $500 for an individual or $1,000 for a family, which may apply to occupational therapy and other medical expenses, but the deductible for prescription drugs is not specified.",,316,240,79,321,3161,2645,115,,13,22,8,60,77,15,68,99.394,0
+1,Mid,What is the out-of-pocket limit for in-network providers (individual/family)?,"$2,500 / $5,000","The out-of-pocket limit for this plan is $2,500 for an individual and $5,000 for a family for network providers.",,394,244,83,334,3174,2658,,,17,22,7,87,103,29,,35.102,0
+1,Complex,Explain how referrals affect specialist coverage.,"A referral is required; without preauthorization, benefits may be reduced by 50% of the total cost.","Referrals affect specialist coverage by requiring preauthorization, which is necessary to receive full benefits. Without preauthorization, benefits may be reduced by 50% of the total cost of the service.",,406,235,74,325,3165,2429,120,,9,20,8,63,89,33,39,35.318,0
+2,Simple,What is the copay for a primary care visit?,$35,$35 copay/office visit and 20% coinsurance for other outpatient services; deductible does not apply.,,394,239,78,329,3169,2433,,,12,22,7,59,71,24,,34.679,0
+2,Simple,"What is the copay for a diagnostic test (x-ray, blood work)?",$10,"The copay for a diagnostic test (x-ray, blood work) is $10 per test if you use a Network Provider. If you use an Out-of-Network Provider, you will pay 40% coinsurance instead of a copay.",,355,244,83,325,3165,2429,318,,17,22,8,83,59,50,51,96.947,0
+2,Simple,What is the copay for imaging tests like MRI?,$50,$50 copay/test for a Network Provider.,,376,239,78,329,3169,2433,,,12,22,7,85,80,11,,34.693,0
+2,Mid,What is the coinsurance for non-preferred brand drugs (Tier 3) in-network?,40%,40% coinsurance,,364,247,86,337,3177,2441,,,20,21,7,86,96,5,,34.677,0
+2,Mid,What is the coinsurance for specialty drugs (Tier 4) out-of-network?,70%,The answer was not found in the document.,,346,245,84,335,3175,,,,18,22,7,72,106,,,22.242,0
+2,Complex,Compare emergency room care costs in-network vs out-of-network.,Both require 20% coinsurance; costs are the same.,The answer was not found in the document.,,301,242,81,327,,,,,15,20,8,96,,,,14.635,0
+3,Simple,What is the coinsurance for inpatient hospital facility fees in-network?,20%,The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+3,Simple,What is the copay for outpatient mental health visits?,$35,The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+3,Simple,How many home health care visits are covered per year?,60 visits/year,The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+3,Mid,What is the coverage for children’s eye exams?,"$35 copay/visit, limited to one exam/year",The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+3,Mid,What is the coverage for children’s glasses?,"20% coinsurance, limited to one pair/year",The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+3,Complex,Explain the limitations for habilitation services.,Includes speech therapy and occupational therapy; limited to 60 visits/year.,The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+4,Simple,Does the plan cover cosmetic surgery?,No,The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+4,Simple,Does the plan cover adult dental care?,No,The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+4,Simple,Does the plan provide Minimum Essential Coverage?,Yes,The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+4,Mid,Name two services generally excluded from coverage.,"Long-term care, infertility treatment",The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+4,Mid,Name two services listed under “Other Covered Services.”,"Acupuncture (if prescribed), chiropractic care",The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+4,Complex,Explain the difference between excluded services and “other covered services.”,"Excluded services are not covered at all, while “other covered services” may be covered with limitations (e.g., hearing aids, bariatric surgery).",The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+5,Simple,What is Peg’s total cost for having a baby?,"$2,560",The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+5,Simple,What is Joe’s total cost for managing diabetes?,"$1,820",The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+5,Simple,What is Mia’s total cost for a simple fracture?,"$1,100",The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+5,Mid,How much did Peg pay in coinsurance?,"$1,800",The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+5,Mid,How much did Joe pay in copayments?,$900,The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
+5,Complex,"Compare Peg’s, Joe’s, and Mia’s deductible payments.","Peg: $500, Joe: $800, Mia: $500 — Joe’s deductible is higher due to additional service-specific deductibles.",The answer was not found in the document.,,,,,,,,,,,,,,,,,0,0
