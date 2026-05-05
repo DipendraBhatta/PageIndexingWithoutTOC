@@ -98,151 +98,151 @@ class ExplainableTreeRAG:
     # ─────────────────────────────────────
 
     def _generate_domain_summary(self) -> str:
-        prompt = f"""Based on these document section titles, write a SHORT 1-sentence description
-of what broad topics this document covers. Be generic and inclusive — cover the full scope,
-not just one sub-topic.
+            prompt = f"""Based on these document section titles, write a SHORT 1-sentence description
+        of what broad topics this document covers. Be generic and inclusive — cover the full scope,
+        not just one sub-topic. incude all titles also.give domain summaary like title it covers , and its main topics. 
 
-TITLES:
-{self._title_tree[:2000]}
+    TITLES:
+    {self._title_tree[:2000]}
 
-Return ONLY the one-sentence description. No extra text."""
-        try:
-            
-            res = self._tracked_llm_call(
-                step="domain_summary",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-            )
-            
-            summary = res.choices[0].message.content.strip()
-            self.log(f"Domain summary generated: {summary}")
-            return summary
-        except Exception as e:
-            self.log(f"Domain summary error: {e} — using fallback")
-            return "the topics covered in this document"
+    Return ONLY the one-sentence description. No extra text."""
+            try:
+                
+                res = self._tracked_llm_call(
+                    step="domain_summary",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.0,
+                )
+                
+                summary = res.choices[0].message.content.strip()
+                self.log(f"Domain summary generated: {summary}")
+                return summary
+            except Exception as e:
+                self.log(f"Domain summary error: {e} — using fallback")
+                return "the topics covered in this document"
 
-    # .......................................
+        # .......................................
 
     def _rewrite_query_with_history(self, question: str) -> str:
-        if not self.history:
-            prompt = f"""Fix ONLY spelling and typo errors in this question.
-Do NOT change the meaning, topic, or intent in any way.
-Do NOT paraphrase or rephrase — only correct misspelled words.
-If the question looks correct already, return it unchanged.
+                if not self.history:
+                    prompt = f"""Fix ONLY spelling and typo errors in this question.
+        Do NOT change the meaning, topic, or intent in any way.
+        Do NOT paraphrase or rephrase — only correct misspelled words.
+        If the question looks correct already, return it unchanged.
 
-Examples of correct behavior:
-    "Retauremrnt Benifits" → "Retirement Benefits"
-    "helth insurence plan" → "health insurance plan"
-    "What is the polcy for leve" → "What is the policy for leave"
+        Examples of correct behavior:
+            "Retauremrnt Benifits" → "Retirement Benefits"
+            "helth insurence plan" → "health insurance plan"
+            "What is the polcy for leve" → "What is the policy for leave"
 
-Return ONLY the corrected question. No explanation.
+        Return ONLY the corrected question. No explanation.
 
-QUESTION: {question}"""
-        else:
-            history_text = "\n".join([
-                f"{turn['role'].upper()}: {turn['content']}"
-                for turn in self.history[-6:]
-            ])
-            prompt = f"""You are a query rewriter. Do exactly two things:
-1. Fix spelling/typo errors conservatively — keep the original topic and intent
-2. Resolve pronouns or vague references using conversation history
+        QUESTION: {question}"""
+                else:
+                    history_text = "\n".join([
+                        f"{turn['role'].upper()}: {turn['content']}"
+                        for turn in self.history[-6:]
+                    ])
+                    prompt = f"""You are a query rewriter. Do exactly two things:
+        1. Fix spelling/typo errors conservatively — keep the original topic and intent
+        2. Resolve pronouns or vague references using conversation history
 
-STRICT RULES:
-- Use the History to replace pronouns (like:it, they, that, those) with the actual subjects.
-- Never change the meaning or topic of the question
-- Never guess a completely different word if correction is ambiguous — keep closest match
-  "Retauremrnt" → "Retirement" (NOT "restaurants")
-- If you cannot confidently fix a typo, leave the word as-is
+        STRICT RULES:
+        - Use the History to replace pronouns (like:it, they, that, those) with the actual subjects.
+        - Never change the meaning or topic of the question
+        - Never guess a completely different word if correction is ambiguous — keep closest match
+        "Retauremrnt" → "Retirement" (NOT "restaurants")
+        - If you cannot confidently fix a typo, leave the word as-is
 
-Conversation History:
-{history_text}
+        Conversation History:
+        {history_text}
 
-CURRENT USER QUESTION: {question}
+        CURRENT USER QUESTION: {question}
 
-Return ONLY the corrected, self-contained question. No extra text."""
-        try:
-           
-            res = self._tracked_llm_call(
-                step="query_rewrite",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-            )
-            
-            rewritten = res.choices[0].message.content.strip()
-            self.log(f"Query rewritten: '{question}' → '{rewritten}'")
-            return rewritten
-        except Exception as e:
-            self.log(f"Query rewrite error: {e} — using original")
-            return question
+        Return ONLY the corrected, self-contained question. No extra text."""
+                try:
+                
+                    res = self._tracked_llm_call(
+                        step="query_rewrite",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.0,
+                    )
+                    
+                    rewritten = res.choices[0].message.content.strip()
+                    self.log(f"Query rewritten: '{question}' → '{rewritten}'")
+                    return rewritten
+                except Exception as e:
+                    self.log(f"Query rewrite error: {e} — using original")
+                    return question
 
     def is_query_relevant(self, query: str) -> Dict[str, Any]:
-        prompt = f"""You are a topic relevance judge for a document retrieval system.
+            prompt = f"""You are a topic relevance judge for a document retrieval system.
 
-This document covers: {self._domain_summary}
+        This document covers: {self._domain_summary}
 
-Your ONLY job: decide if the query topic is broadly related to this document's domain.
+        Your ONLY job: decide if the query topic is broadly related to this document's domain.
 
-RULES:
-- Return relevant: true if the query could POSSIBLY be answered by a document on this topic
-- Return relevant: false ONLY if the topic is completely unrelated (e.g. asking about football scores in a medical document)
-- Do NOT judge whether the exact answer exists — only check if the topic fits the domain
-- When uncertain, always return relevant: true
+        RULES:
+        - Return relevant: true if the query could POSSIBLY be answered by a document on this topic
+        - Return relevant: false ONLY if the topic is completely unrelated (e.g. asking about football scores in a medical document)
+        - Do NOT judge whether the exact answer exists — only check if the topic fits the domain
+        - When uncertain, always return relevant: true
 
-Return ONLY valid JSON: {{"relevant": true | false, "reason": "one short sentence"}}
+        Return ONLY valid JSON: {{"relevant": true | false, "reason": "one short sentence"}}
 
-QUERY: {query}"""
-        try:
-            
-            res = self._tracked_llm_call(
-                step="relevance_check",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-            )
-            
-            out = json.loads(_strip_fences(res.choices[0].message.content))
-            self.log(f"Relevance check → {out}")
-            return out
-        except Exception as e:
-            self.log(f"Relevance check error: {e} — defaulting to relevant")
-            return {"relevant": True, "reason": "proceeding (parse error)"}
+        QUERY: {query}"""
+            try:
+                    
+                    res = self._tracked_llm_call(
+                        step="relevance_check",
+                        messages=[{"role": "user", "content": prompt}],
+                        temperature=0.0,
+                    )
+                    
+                    out = json.loads(_strip_fences(res.choices[0].message.content))
+                    self.log(f"Relevance check → {out}")
+                    return out
+            except Exception as e:
+                    self.log(f"Relevance check error: {e} — defaulting to relevant")
+                    return {"relevant": True, "reason": "proceeding (parse error)"}
 
     def classify_query(self, query: str) -> str:
-        prompt = f"""Classify into exactly one: "simple", "multi_fact", or "analytical".
+            prompt = f"""Classify into exactly one: "simple", "multi_fact", or "analytical".
 
-Return ONLY JSON: {{"type": "..."}}
+    Return ONLY JSON: {{"type": "..."}}
 
-QUERY: {query}"""
-        try:
-            
-            res = self._tracked_llm_call(
-                step="query_classification",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-            )
-            
-            return json.loads(_strip_fences(res.choices[0].message.content)).get("type", "simple")
-        except Exception as e:
-            self.log(f"classify_query error: {e}")
-            return "simple"
+    QUERY: {query}"""
+            try:
+                
+                res = self._tracked_llm_call(
+                    step="query_classification",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.0,
+                )
+                
+                return json.loads(_strip_fences(res.choices[0].message.content)).get("type", "simple")
+            except Exception as e:
+                self.log(f"classify_query error: {e}")
+                return "simple"
 
     def plan_query(self, query: str, query_type: str) -> List[str]:
-        if query_type == "simple" or len(query.split()) <= 6:
+        if query_type == "simple" or len(query.split()) <= 8:
             return [query]
         prompt = f"""Break into at most 3 short retrieval intents. Return ONLY a JSON list of strings.
 
-QUESTION: {query}"""
+         QUESTION: {query}"""
         try:
-          
-            res = self._tracked_llm_call(
-                step="query_planning",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-            )
             
-            return json.loads(_strip_fences(res.choices[0].message.content))
+                res = self._tracked_llm_call(
+                    step="query_planning",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.0,
+                )
+                
+                return json.loads(_strip_fences(res.choices[0].message.content))
         except Exception as e:
-            self.log(f"plan_query error: {e}")
-            return [query]
+                self.log(f"plan_query error: {e}")
+                return [query]
 
     def choose_root(self, roots: List[Dict], intent: str) -> Dict:
         options = [
@@ -251,61 +251,64 @@ QUESTION: {query}"""
         ]
         prompt = f"""Select the best ROOT section whose subtopics are most likely to answer this intent.
 
-Scoring guide (be strict and realistic):
-    0.8-1.0: This root's subtopics directly match the intent topic
-    0.5-0.7: Loosely related, subtopics might contain the answer
-    0.1-0.4: Unlikely to contain the answer
-    0.0: Completely unrelated
 
-IMPORTANT:
-- Score based on whether SUBTOPICS under this root will answer the intent
-- Do NOT give 0.9 just because a title partially matches
-- Scores must reflect actual relevance, not title similarity alone
 
-Return ONLY valid JSON:
-{{"index": <number>, "confidence": <float between 0.0 and 1.0>, "reason": "explain why this root's subtopics likely answer the intent"}}
+        Scoring guide (be strict and realistic):
+            0.8-1.0: This root's subtopics directly match the intent topic
+            0.5-0.7: Loosely related, subtopics might contain the answer
+            0.1-0.4: Unlikely to contain the answer
+            0.0: Completely unrelated
 
-OPTIONS:
-{json.dumps(options, indent=2)}
+        IMPORTANT:
+        - root node contains topic wise summary of its child nodes, so evaluate the root's content as well as the title 
+        - Score based on whether SUBTOPICS under this root will answer the intent
+        - Do NOT give 0.9 just because a title partially matches
+        - Scores must reflect actual relevance, not title similarity alone
 
-INTENT: {intent}"""
+        Return ONLY valid JSON:
+        {{"index": <number>, "confidence": <float between 0.0 and 1.0>, "reason": "explain why this root's subtopics likely answer the intent"}}
+
+        OPTIONS:
+        {json.dumps(options, indent=2)}
+
+        INTENT: {intent}"""
         try:
-           
-            res = self._tracked_llm_call(
-                step="choose_root",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-            )
             
-            out = json.loads(_strip_fences(res.choices[0].message.content))
-            idx = out.get("index", 0)
-            conf = float(out.get("confidence", 0.5))
-            reason = out.get("reason", "No reason provided")
-            idx = max(0, min(idx, len(roots) - 1))
-            
-            self.traversal_steps.append({
-                "step": len(self.traversal_steps) + 1,
-                "level": "root",
-                "title": roots[idx].get("title", "Unknown"),
-                "confidence": round(conf, 2),
-                "reason": reason,
-                "action": "selected"
-            })
-            
-            self.log(f"Root selected: '{roots[idx].get('title')}' conf={conf:.2f} reason={reason}")
-            return roots[idx]
-        except Exception as e:
-            self.log(f"choose_root error: {e} — falling back to first root")
-            if roots:
+                res = self._tracked_llm_call(
+                    step="choose_root",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.0,
+                )
+                
+                out = json.loads(_strip_fences(res.choices[0].message.content))
+                idx = out.get("index", 0)
+                conf = float(out.get("confidence", 0.5))
+                reason = out.get("reason", "No reason provided")
+                idx = max(0, min(idx, len(roots) - 1))
+                
                 self.traversal_steps.append({
                     "step": len(self.traversal_steps) + 1,
                     "level": "root",
-                    "title": roots[0].get("title", "Unknown"),
-                    "confidence": 0.0,
-                    "reason": f"Fallback due to error: {e}",
-                    "action": "fallback"
+                    "title": roots[idx].get("title", "Unknown"),
+                    "confidence": round(conf, 2),
+                    "reason": reason,
+                    "action": "selected"
                 })
-            return roots[0] if roots else {}
+                
+                self.log(f"Root selected: '{roots[idx].get('title')}' conf={conf:.2f} reason={reason}")
+                return roots[idx]
+        except Exception as e:
+                self.log(f"choose_root error: {e} — falling back to first root")
+                if roots:
+                    self.traversal_steps.append({
+                        "step": len(self.traversal_steps) + 1,
+                        "level": "root",
+                        "title": roots[0].get("title", "Unknown"),
+                        "confidence": 0.0,
+                        "reason": f"Fallback due to error: {e}",
+                        "action": "fallback"
+                    })
+                return roots[0] if roots else {}
 
     def choose_child(self, node: Dict, intent: str) -> Optional[Dict]:
         children = node.get("nodes", [])
@@ -318,60 +321,60 @@ INTENT: {intent}"""
         ]
         prompt = f"""Select the best CHILD section that most directly answers this intent.
 
-Scoring guide (be strict and differentiated — do NOT give same score to multiple options):
-    0.9-1.0: Title AND content summary directly and specifically answer the intent
-    0.7-0.8: Strongly related, content likely contains a partial or full answer
-    0.4-0.6: May be relevant but the match is indirect or uncertain
-    0.1-0.3: Unlikely to contain the answer
-    0.0: Completely unrelated
+        Scoring guide (be strict and differentiated — do NOT give same score to multiple options):
+            0.9-1.0: Title AND content summary directly and specifically answer the intent
+            0.7-0.8: Strongly related, content likely contains a partial or full answer
+            0.4-0.6: May be relevant but the match is indirect or uncertain
+            0.1-0.3: Unlikely to contain the answer
+            0.0: Completely unrelated
 
-IMPORTANT:
-- Do NOT give 0.90 just because the section title matches — evaluate the content summary too
-- The best match must score MEANINGFULLY higher than other options
-- Reason must explain what specific content makes this the best match
+        IMPORTANT:
+        - Do NOT give 0.90 just because the section title matches — evaluate the content summary too
+        - The best match must score MEANINGFULLY higher than other options
+        - Reason must explain what specific content makes this the best match
 
-Return ONLY valid JSON:
-{{"index": <number>, "confidence": <float between 0.0 and 1.0>, "reason": "explain what specific content makes this section the best match"}}
+        Return ONLY valid JSON:
+        {{"index": <number>, "confidence": <float between 0.0 and 1.0>, "reason": "explain what specific content makes this section the best match"}}
 
-OPTIONS:
-{json.dumps(options, indent=2)}
+        OPTIONS:
+        {json.dumps(options, indent=2)}
 
-INTENT: {intent}"""
+        INTENT: {intent}"""
         try:
-          
-            res = self._tracked_llm_call(
-                step="choose_child",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-            )
             
-            out = json.loads(_strip_fences(res.choices[0].message.content))
-            idx = out.get("index", -1)
-            conf = float(out.get("confidence", 0.0))
-            reason = out.get("reason", "No reason provided")
-            
-            if idx < 0 or idx >= len(children) or conf < self.child_confidence_threshold:
-                rejected_title = children[idx].get("title", "N/A") if 0 <= idx < len(children) else "N/A"
-                self.log(
-                    f"Low child confidence ({conf:.2f} < {self.child_confidence_threshold}) "
-                    f"for '{rejected_title}' → staying at current node. Reason: {reason}"
+                res = self._tracked_llm_call(
+                    step="choose_child",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.0,
                 )
-                return None
-            
-            self.traversal_steps.append({
-                "step": len(self.traversal_steps) + 1,
-                "level": "child",
-                "title": children[idx].get("title", "Unknown"),
-                "confidence": round(conf, 2),
-                "reason": reason,
-                "action": "selected"
-            })
-            
-            self.log(f"Child selected: '{children[idx].get('title')}' conf={conf:.2f} reason={reason}")
-            return children[idx]
+                
+                out = json.loads(_strip_fences(res.choices[0].message.content))
+                idx = out.get("index", -1)
+                conf = float(out.get("confidence", 0.0))
+                reason = out.get("reason", "No reason provided")
+                
+                if idx < 0 or idx >= len(children) or conf < self.child_confidence_threshold:
+                    rejected_title = children[idx].get("title", "N/A") if 0 <= idx < len(children) else "N/A"
+                    self.log(
+                        f"Low child confidence ({conf:.2f} < {self.child_confidence_threshold}) "
+                        f"for '{rejected_title}' → staying at current node. Reason: {reason}"
+                    )
+                    return None
+                
+                self.traversal_steps.append({
+                    "step": len(self.traversal_steps) + 1,
+                    "level": "child",
+                    "title": children[idx].get("title", "Unknown"),
+                    "confidence": round(conf, 2),
+                    "reason": reason,
+                    "action": "selected"
+                })
+                
+                self.log(f"Child selected: '{children[idx].get('title')}' conf={conf:.2f} reason={reason}")
+                return children[idx]
         except Exception as e:
-            self.log(f"choose_child error: {e}")
-            return None
+                self.log(f"choose_child error: {e}")
+                return None
 
     def extract_answer(self, node: Dict, intent: str, context_trail: List[str]) -> str:
         parts = []
@@ -383,16 +386,16 @@ INTENT: {intent}"""
         if content:
             parts.append(f"=== SECTION: {node.get('title', '')} ===")
             parts.append(content)
-        
-        full_context = "\n\n".join(parts)
-        prompt = f"""Answer using ONLY the CONTEXT below. Be specific and concise.
-If the answer is not present in the context, say "Not found in document".
+                
+            full_context = "\n\n".join(parts)
+            prompt = f"""Answer using ONLY the CONTEXT below. Be specific and concise.
+        If the answer is not present in the context, say "Not found in document".
 
-CONTEXT:
-{full_context}
+        CONTEXT:
+        {full_context}
 
-QUESTION:
-{intent}"""
+        QUESTION:
+        {intent}"""
         try:
            
             res = self._tracked_llm_call(
@@ -444,32 +447,32 @@ QUESTION:
 
     def synthesize_answer(self, original_question: str, fragments: List[Dict[str, str]], query_type: str) -> str:
         if not fragments:
-            return "The answer was not found in the document."
-        
+                return "The answer was not found in the document."
+            
         if query_type == "simple" and len(fragments) == 1:
-            return fragments[0]["answer"]
-        
+                return fragments[0]["answer"]
+            
         retrieved_facts = "\n\n".join(
-            f"[Retrieved for: {f['intent']}]\n{f['answer']}" for f in fragments
-        )
+                f"[Retrieved for: {f['intent']}]\n{f['answer']}" for f in fragments
+            )
         prompt = f"""Using the RETRIEVED FACTS below, answer the ORIGINAL QUESTION clearly and concisely.
 
-RETRIEVED FACTS:
-{retrieved_facts}
+            RETRIEVED FACTS:
+            {retrieved_facts}
 
-ORIGINAL QUESTION: {original_question}"""
+            ORIGINAL QUESTION: {original_question}"""
         try:
-            
-            res = self._tracked_llm_call(
-                step="synthesize_answer",
-                messages=[{"role": "user", "content": prompt}],
-                temperature=0.0,
-            )
-            
-            return res.choices[0].message.content.strip()
+                
+                res = self._tracked_llm_call(
+                    step="synthesize_answer",
+                    messages=[{"role": "user", "content": prompt}],
+                    temperature=0.0,
+                )
+                
+                return res.choices[0].message.content.strip()
         except Exception as e:
-            self.log(f"synthesize_answer error: {e}")
-            return "\n\n".join(f["answer"] for f in fragments)
+                self.log(f"synthesize_answer error: {e}")
+                return "\n\n".join(f["answer"] for f in fragments)
 
     def query(self, question: str, stream: bool = False) -> Dict[str, Any]:
         self.trace = []
