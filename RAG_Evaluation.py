@@ -1,6 +1,13 @@
+from dotenv import load_dotenv
 import pandas as pd
 import os
 import logging
+
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessag
+
+load_dotenv()
+
 from Query_Retrieval.Retrieval_engine import ExplainableTreeRAG
 
 class RAGEvaluator:
@@ -13,6 +20,22 @@ class RAGEvaluator:
         self.df = None
         self._setup_logger()
         self.rag = ExplainableTreeRAG(index_path=self.index_path)
+
+        self.LLM_MODEL = os.getenv("OPENROUTER_MODEL")
+        self.key_name = "OPEN_ROUTER_API_KEY"
+        
+        self.judge_llm = ChatOpenAI(
+
+            model=self.LLM_MODEL,
+            openai_api_key=os.getenv(self.key_name),
+            openai_api_base="https://openrouter.ai/api/v1",
+            temperature=0,
+            # OpenRouter specific headers
+            default_headers={
+                "HTTP-Referer": "http://localhost:3000", # Required by some models on OpenRouter
+                "X-Title": "RAG Evaluation Script", 
+            }
+        )
 
     def _setup_logger(self):
         logging.basicConfig(
@@ -133,9 +156,8 @@ class RAGEvaluator:
         """
 
         try:
-            # Use your RAG's LLM client with a fast model
-            response = self.rag.llm.complete(prompt)
-            score = response.text.strip()
+            response = self.judge_llm.invoke([HumanMessage(content=prompt)])
+            score = response.content.strip()
 
             # Take only the first character to avoid verbose outputs
             if score and score[0] == "1":
