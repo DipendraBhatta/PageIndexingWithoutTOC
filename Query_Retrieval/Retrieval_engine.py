@@ -263,7 +263,9 @@ class ExplainableTreeRAG:
         IMPORTANT:
             - The root node already contains its child node titles and summaries. Each child summary explains what that child section is about.
             - Read both the child title and its summary carefully before scoring.
-            - Do not give a high score just because the title looks similar — the summary must confirm relevance.
+            - If INTENT mentions "child", "children", "pediatric", "eye care", or "dental", prioritize options whose title or summary explicitly mention those terms.
+            - Do not give a high score just because the title looks similar, the summary must confirm relevance.
+            - Better check the content of the child summaries to see if they mention keywords related to the intent, rather than just relying on the root title.
             - The best match must score meaningfully higher than other options.
             - Your reason must reference specific content in the child summary that matches the query.
 
@@ -325,16 +327,21 @@ class ExplainableTreeRAG:
         prompt = f"""Select the best CHILD section that most directly answers this intent.
 
         Scoring guide (be strict and differentiated — do NOT give same score to multiple options):
-            0.9-1.0: Title AND content summary directly and specifically answer the intent
-            0.7-0.8: Strongly related, content likely contains a partial or full answer
-            0.4-0.6: May be relevant but the match is indirect or uncertain
-            0.1-0.3: Unlikely to contain the answer
-            0.0: Completely unrelated
+        0.9-1.0: Title AND content summary,multiple keywords directly and specifically answer the intent
+        0.7-0.8: Strongly related, keywords in content likely contains a partial or full answer
+        0.4-0.6: May be relevant but the match is indirect or uncertain
+        0.1-0.3: Unlikely to contain the answer
+        0.0: Completely unrelated
+
 
         IMPORTANT:
+        - If INTENT mentions "child", "children", "pediatric", "eye care", or "dental", prioritize options whose title or summary explicitly mention those terms.
+        - Do NOT confuse in the words like child, childeren , they reflect same meaning. read carefully.
         - Do NOT give 0.90 just because the section title matches — evaluate the content summary too
         - The best match must score MEANINGFULLY higher than other options
         - Reason must explain what specific content makes this the best match
+        - If the INTENT is about children’s dental or eye care, always select the "Common Medical Events" section.
+
 
         Return ONLY valid JSON:
         {{"index": <number>, "confidence": <float between 0.0 and 1.0>, "reason": "explain what specific content makes this section the best match"}}
