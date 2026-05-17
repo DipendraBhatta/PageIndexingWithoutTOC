@@ -73,10 +73,10 @@ class HTMLCleaner:
 
         print("\n All files processed successfully!")
 
-if __name__ == "__main__":
-    cleaner = HTMLCleaner(
-        input_dir="Results/html",             
-        output_dir="Results/structured/html"   
-    )
+# if __name__ == "__main__":
+#     cleaner = HTMLCleaner(
+#         input_dir="Results/html",             
+#         output_dir="Results/structured/html"   
+#     )
 
-    cleaner.process_all()
+#     cleaner.process_all()

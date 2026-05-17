@@ -6,14 +6,16 @@ import logging
 from pathlib import Path
 from typing import List
 from bs4 import BeautifulSoup
-from Ingestion.Indexing.page_schema import DocumentIndexFactory
+from ingestion.indexing.page_schema import DocumentIndexFactory
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-from Ingestion.Indexing.token_counter import TokenTracker
+from ingestion.indexing.token_counter import TokenTracker
+
 
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 GROQ_MODEL = os.getenv("LLM_MODEL")
+
 
 class PageExtractor:
     def __init__(self, input_path, output_path):
@@ -23,7 +25,7 @@ class PageExtractor:
         self.tracker = TokenTracker(model_name=GROQ_MODEL)
 
         # Debug
-        self.debug_dir = Path("debug_verification")
+        self.debug_dir = Path("ingestion_results/indexing_results/debug")
         self.page_out = self.debug_dir / "extracted_text"
         self.table_out = self.debug_dir / "table_summaries"
         self.page_out.mkdir(parents=True, exist_ok=True)
@@ -219,7 +221,7 @@ class PageExtractor:
                     pf.write(full_narrative)
                 
                 # Return [] for tables_list to make it null/empty in JSON
-                return full_narrative, [], False, soup, headers, first_1000_words
+                return full_narrative, [], False, soup, headers, first_1200_words
 
 
             # 3. NORMAL PROCESSING: (Only if multi_table_summary is empty)
@@ -258,9 +260,9 @@ class PageExtractor:
             with open(self.page_out / f"{file_path.stem}.txt", "w", encoding="utf-8") as pf:
                 pf.write(cleaned_text)
 
-            return cleaned_text, tables_list, did_stitch_forward, soup, headers, first_1000_words
-    
-    def _generate_relevant_title(self, page_num: int, first_1000: str, headers: List[str], tables: List[dict]) -> str:
+            return cleaned_text, tables_list, did_stitch_forward, soup, headers, first_1200_words
+
+    def _generate_relevant_title(self, page_num: int, first_1200: str, headers: List[str], tables: List[dict]) -> str:
         table_context = "\n\nTables found:\n" + "\n---\n".join(t.get('table_summary_content', '')[:500] for t in tables[:2]) if tables else ""
         header_context = "\n".join(headers[:8]) if headers else "No clear headers"
         prompt = f"""You are an expert document section title generator.
@@ -269,8 +271,8 @@ class PageExtractor:
 
         Generate a short, meaningful section title.
 
-        First 1000 words:
-        {first_1000[:1000]}
+        First 1200 words:
+        {first_1200[:1200]}
 
         Headers:
         {header_context}
@@ -339,8 +341,8 @@ Return ONLY the document title (max 80 characters). No preamble, no quotes."""
             next_file = self.all_files[i + 1] if (i + 1) < len(self.all_files) else None
             page_num = int(re.search(r'\d+', current_file.name).group())
 
-            text, tables, was_stitched, soup, headers, first_1000 = self._parse_file(current_file, next_file, skip_next_table)
-            title = self._generate_relevant_title(page_num, first_1000, headers, tables)
+            text, tables, was_stitched, soup, headers, first_1200 = self._parse_file(current_file, next_file, skip_next_table)
+            title = self._generate_relevant_title(page_num, first_1200, headers, tables)
             overlap_txt, stop_h = self._get_overlap(next_file)
 
             merged_parts = [f"--- PAGE {page_num} START ---"]

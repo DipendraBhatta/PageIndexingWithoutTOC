@@ -3,30 +3,36 @@
 .vscode/
 
 # Python cache and bytecode
-__pycache__/
+**/__pycache__/
 *.pyc
 *.pyo
 *.pyd
 
 # Virtual environments
 venv/
+env/
 
 # Logs and process files
 *.log
 process.log
 indexing_process.log
+pipeline_execution.log
 Indexing_log.txt
-DoclingParsing_Log/
+logs/
 
 # Chat history
 chat_history/
 
-# Ignore all ingestion outputs
-Ingestion_Results/
+# --- Ingestion Results Management ---
+# Ignore everything in the results folder by default
+ingestion_results/
 
-# But keep Final_Indexing.json
-!Ingestion_Results/Indexing_Results/
-!Ingestion_Results/Indexing_Results/Final_Indexing.json
+# Allow Git to look inside these specific subdirectories
+!ingestion_results/indexing_results/
 
-# Debug verification
+# Keep only the final output file
+!ingestion_results/indexing_results/Final_Indexing.json
+
+# --- Debug and Temporary files ---
 debug_verification/
+data/test_data/

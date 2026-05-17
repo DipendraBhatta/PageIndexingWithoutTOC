@@ -8,7 +8,7 @@ from typing import List, Dict, Any
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 from langchain_groq import ChatGroq
-from Ingestion.Indexing.token_counter import TokenTracker
+from ingestion.indexing.token_counter import TokenTracker
 
 load_dotenv()
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
@@ -42,7 +42,7 @@ class RootNodeSummaryGenerator:
         formatter = logging.Formatter("%(asctime)s - [GENERATOR] - %(message)s")
         ch = logging.StreamHandler()
         ch.setFormatter(formatter)
-        fh = logging.FileHandler("Indexing_log.txt", encoding="utf-8")
+        fh = logging.FileHandler("ingestion_results/indexing_results/generator_log.txt", encoding="utf-8")
         fh.setFormatter(formatter)
         self.logger.addHandler(ch)
         self.logger.addHandler(fh)
@@ -226,18 +226,15 @@ class RootNodeSummaryGenerator:
 
 
 
-    def generate_topic_centric_index(self, indexing_json_path: str, final_master_map: list):
+    def generate_topic_centric_index(self, final_master_map: list):
         """
-        Creates a new JSON output by combining topic titles from Page_Indexing.json
-        with the surgical content stored in Final_Master_Map.json.
+        Creates a new JSON output by combining topic titles from self.nodes
+        with the surgical content stored in Final_Master_Map.
         """
-        # Load the Indexing rules (Titles and Page Ranges)
-        with open(indexing_json_path, 'r', encoding='utf-8') as f:
-            indexing_data = json.load(f)
-
         new_output = []
 
-        for entry in indexing_data:
+        # We use self.nodes which was loaded in __init__
+        for entry in self.nodes:
             # 1. Skip the Root Title (Page 0)
             page_num_raw = entry.get("page_number")
             if page_num_raw == 0:
@@ -245,24 +242,21 @@ class RootNodeSummaryGenerator:
 
             topic_title = entry.get("title")
             
-            # 2. Determine Page Range (Handles single pages or potential ranges)
-            # In your case, we use the 'page_number' from the indexing file
-            start_page = page_num_raw
-            
-            # If your indexing file eventually includes 'end_page', you can use:
-            # end_page = entry.get("end_page", start_page)
-            # page_range_str = f"{start_page}-{end_page}" if start_page != end_page else str(start_page)
-            page_range_str = str(start_page)
+            # 2. Determine Page Range
+            # We ensure start_page is treated as an integer for matching
+            try:
+                start_page = int(page_num_raw)
+            except (ValueError, TypeError):
+                continue
 
-            # 3. Extract matching content from Final_Master_Map
-            # We find the page entry in your surgical map that matches this page number
+            # 3. Extract matching content from the master map we built earlier
             page_content = next((p for p in final_master_map if p["page"] == start_page), None)
 
             if page_content:
-                # 4. Append the data as it is from Final_Master_Map
+                # 4. Construct the organized routing data
                 new_output.append({
                     "title": topic_title,
-                    "page_number": page_range_str,
+                    "page_number": str(start_page),
                     "content": {
                         "headers": page_content.get("headers", []),
                         "paragraphs": page_content.get("paragraphs", []),
@@ -332,62 +326,72 @@ class RootNodeSummaryGenerator:
         return "Summary generation unavailable."
 
 
-if __name__ == "__main__":
-  
-    # 1. Initialize
-    json_path = "Ingestion_Results/Indexing_Results/Page_Indexing.json"
-    generator = RootNodeSummaryGenerator(json_path)
 
-    # 2. HTML Folder Processing
-    html_folder = "Ingestion_Results/Parsing_Results/structured/html"
-    full_results = generator.build_page_range_map(html_folder)
-    
-    with open("Ingestion_Results/Indexing_Results/Structural_Map.json", "w", encoding="utf-8") as f:
-        json.dump(full_results, f, indent=4)
 
-    # 3. Multi-Table Processing
-    extracted_folder = "debug_verification/extracted_text"
-    multi_table_results = generator.collect_multi_table_topics(extracted_folder)
-    
-    with open("Ingestion_Results/Indexing_Results/Multi_Table_Topics.json", "w", encoding="utf-8") as f:
-        json.dump(multi_table_results, f, indent=4)
 
-    # 4. Load Table Map and Merge
-    # Fix: Added check for table file to prevent load error if it doesn't exist
-    table_path = "Ingestion_Results/Indexing_Results/Table_Structural_Map.json"
-    if os.path.exists(table_path):
-        with open(table_path, "r") as f:
-            table_data = json.load(f)
-    else:
-        table_data = []
+def main():
+        # Style: [1]input_json, [2]html_dir, [3]text_dir, [4]output_final_json
+        if len(sys.argv) < 5:
+            print("\n Summary Generator Error: Missing arguments")
+            print("Usage: python3 root_node_summary.py <input_json> <html_dir> <text_dir> <output_json>")
+            sys.exit(1)
 
-    final_master_json = generator.generate_master_page_map(full_results, table_data, multi_table_results)
-
-    with open("Ingestion_Results/Indexing_Results/FINAL_MASTER_MAP.json", "w") as f:
-        json.dump(final_master_json, f, indent=4)
-
-    # 5. Generate Topic Centric Index
-    indexing_path = "Ingestion_Results/Indexing_Results/Page_Indexing.json"
-    final_organized_json = generator.generate_topic_centric_index(indexing_path, final_master_json)
+        # 1. Capture dynamic paths from Orchestrator
+        json_path = sys.argv[1]
+        html_folder = sys.argv[2]
+        text_folder = sys.argv[3]
+        output_path = Path(sys.argv[4])
         
-    with open("Ingestion_Results/Indexing_Results/TOPIC_ROUTING_MAP.json", "w") as f:
-        json.dump(final_organized_json, f, indent=4)
+        # This automatically finds your 'doc_slug' folder (e.g., .../indexing_results/sbc/)
+        indexing_dir = output_path.parent 
+        indexing_dir.mkdir(parents=True, exist_ok=True)
 
-    # 6. Generate Summary and Inject
-    # Fix: Changed routing_data to final_organized_json
-    root_summary = generator.generate_llm_summary(final_organized_json)
+        # 2. Initialize Generator
+        generator = RootNodeSummaryGenerator(json_path)
 
-    # Inject into root node
-    # Fix: Changed generator.routing_data to final_organized_json
-    for entry in generator.nodes:
-        if entry.get("page_number") == 0 or entry.get("node_id") == "0001":
-            # Using 'merged_content' as per your original logic
-            entry["merged_content"] = root_summary
-            break
+        # 3. HTML Processing -> Save Structural Map
+        full_results = generator.build_page_range_map(html_folder)
+        with open(indexing_dir / "Structural_Map.json", "w", encoding="utf-8") as f:
+            json.dump(full_results, f, indent=4)
 
-    # 7. Save Final Result
-    output_path = Path("Page_indexing_with_root_summary.json")
-    with open(output_path, "w", encoding="utf-8") as f:
-        json.dump(generator.nodes, f, indent=4, ensure_ascii=False)
+        # 4. Multi-Table Processing -> Save Multi-Table Topics
+        multi_table_results = generator.collect_multi_table_topics(text_folder)
+        with open(indexing_dir / "Multi_Table_Topics.json", "w", encoding="utf-8") as f:
+            json.dump(multi_table_results, f, indent=4)
 
-    generator.logger.info(f"SUCCESS: Final JSON saved at {output_path}")
+        # 5. Handle Table Structural Map (Check if exists)
+        table_path = indexing_dir / "Table_Structural_Map.json"
+        table_data = []
+        if table_path.exists():
+            with open(table_path, "r") as f:
+                table_data = json.load(f)
+
+        # 6. Generate Master Map -> Save Final Master Map
+        final_master_json = generator.generate_master_page_map(full_results, table_data, multi_table_results)
+        with open(indexing_dir / "FINAL_MASTER_MAP.json", "w", encoding="utf-8") as f:
+            json.dump(final_master_json, f, indent=4)
+
+        # 7. Generate Topic Centric Index -> Save Topic Routing Map
+        final_organized_json = generator.generate_topic_centric_index(final_master_json)
+        with open(indexing_dir / "TOPIC_ROUTING_MAP.json", "w", encoding="utf-8") as f:
+            json.dump(final_organized_json, f, indent=4)
+
+        # 8. Generate Summary and Inject into Root
+        root_summary = generator.generate_llm_summary(final_organized_json)
+        for entry in generator.nodes:
+            if entry.get("page_number") == 0 or entry.get("node_id") == "0001":
+                entry["merged_content"] = root_summary
+                break
+
+        # 9. Save Final Result (The one the Aggregator will use)
+        with open(output_path, "w", encoding="utf-8") as f:
+            json.dump(generator.nodes, f, indent=4, ensure_ascii=False)
+
+        generator.logger.info(f" SUCCESS: All {indexing_dir.name} debug files and final summary saved.")
+
+
+
+
+if __name__ == "__main__":
+     main()
+    

@@ -11,8 +11,8 @@ import uuid
 from typing import Any, Dict, List, Optional
 from groq import Groq
 from dotenv import load_dotenv
-from Query_Retrieval.cost_estimation import CostTracker
-from Query_Retrieval.pretty_query import C, display_welcome_info, pretty_query
+from query_retrieval.cost_estimation import CostTracker
+from query_retrieval.pretty_query import C, display_welcome_info, pretty_query
 
 load_dotenv()
 

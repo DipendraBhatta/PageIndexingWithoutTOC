@@ -4,8 +4,8 @@ import sys
 from pathlib import Path
 from typing import List
 
-from Ingestion.Indexing.page_schema import PageIndexNode
-from Ingestion.Indexing.schema import IndexNode
+from ingestion.indexing.page_schema import PageIndexNode
+from ingestion.indexing.schema import IndexNode
 
 
 class IndexingAggregator:
@@ -18,6 +18,8 @@ class IndexingAggregator:
         self.input_path = Path(input_path)
         self.output_path = Path(output_path)
         self.logger = logging.getLogger("IndexingLogger")
+
+
 
     def build(self, pages: List[PageIndexNode]) -> IndexNode:
         """

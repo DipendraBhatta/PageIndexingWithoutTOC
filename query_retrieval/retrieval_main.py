@@ -1,6 +1,6 @@
 # Retrieval_main.py
-from Query_Retrieval.Retrieval_engine import ExplainableTreeRAG
-from Query_Retrieval.chat_history import SessionLogger
+from query_retrieval.retrieval_engine import ExplainableTreeRAG
+from query_retrieval.chat_history import SessionLogger
 
 def main():
     print(" EXPLAINABLE TREE RAG ENGINE")
