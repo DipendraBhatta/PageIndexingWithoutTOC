@@ -376,9 +376,13 @@ Ultra-fast inference (~2.5s end-to-end for 6 LLM calls) at a cost of less than $
 
 ## 📌 Roadmap
 
+<<<<<<< HEAD
 - [ ] Multi-document querying across an insurance plan library
 - [ ] Web UI (Streamlit or FastAPI frontend)
 - [ ] Support for DOCX and HTML SPD formatsss
+=======
+- [ ] Support for DOCX and HTML SPD formats
+>>>>>>> ea84b21f663ea4992d369ab9ca654f6a6a422257
 - [ ] Batch ingestion CLI
 - [ ] Automated evaluation benchmarks
 
