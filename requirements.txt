@@ -1,0 +1,22 @@
+# ── LLM Inference ─────────────────────────────────────────────
+groq                        # Groq SDK — direct client in retrieval_engine.py
+langchain-groq              # ChatGroq — used in indexing pipeline
+langchain-openai            # ChatOpenAI — used for OpenRouter (evaluation LLM)
+langchain-core              # HumanMessage and core LangChain abstractions
+
+# ── Document Parsing ──────────────────────────────────────────
+docling                     # Core PDF parsing engine (DocumentConverter, PdfFormatOption)
+beautifulsoup4              # HTML structuring & parsing (to_structured_html.py)
+lxml                        # HTML/XML parser backend for BeautifulSoup
+
+# ── Schema & Validation ───────────────────────────────────────
+pydantic                    # Data schemas (schema.py, page_schema.py)
+
+# ── Token Counting ────────────────────────────────────────────
+tiktoken                    # Token counting for cost estimation (token_counter.py)
+
+# ── Terminal Output ───────────────────────────────────────────
+rich                        # Pretty terminal output (pretty_query.py)
+
+# ── Environment Variables ─────────────────────────────────────
+python-dotenv               # Loads .env file (GROQ_API_KEY, OPENROUTER_API_KEY)
