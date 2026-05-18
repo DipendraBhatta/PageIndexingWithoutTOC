@@ -12,7 +12,7 @@ from typing import Any, Dict, List, Optional
 from groq import Groq
 from dotenv import load_dotenv
 from query_retrieval.cost_estimation import CostTracker
-from query_retrieval.pretty_query import C, display_welcome_info, pretty_query
+from query_retrieval.pretty_query import ColorSetup, _header, _hr, display_welcome_info, pretty_query
 
 load_dotenv()
 
@@ -77,6 +77,55 @@ class ExplainableTreeRAG:
         display_welcome_info(self)
 
         ExplainableTreeRAG.pretty_query = pretty_query  
+
+
+
+    def display_full_json_tree(self, truncate_words: int):
+        """Clean, attractive, and properly formatted JSON tree display"""
+        print()
+        _hr("═", ColorSetup.CYAN)
+        _header("FULL DOCUMENT INDEX TREE", bg=ColorSetup.BG_DARK, fg=ColorSetup.CYAN)
+        _hr("═", ColorSetup.CYAN)
+
+        def truncate_text(text: str, max_words: int) -> str:
+            if not isinstance(text, str) or not text.strip():
+                return text
+            words = text.split()
+            if len(words) > max_words:
+                return " ".join(words[:max_words]) + "......"
+            return text
+
+        # Create a deep copy and truncate content/summary
+        def clean_node(node):
+            cleaned = node.copy()
+            if "summary" in cleaned and cleaned["summary"]:
+                cleaned["summary"] = truncate_text(cleaned["summary"], truncate_words)
+            if "content" in cleaned and cleaned["content"]:
+                cleaned["content"] = truncate_text(cleaned["content"], truncate_words)
+            if "nodes" in cleaned:
+                cleaned["nodes"] = [clean_node(child) for child in cleaned["nodes"]]
+            return cleaned
+
+        # Prepare data
+        raw_data = self.data if isinstance(self.data, list) else [self.data]
+        cleaned_data = [clean_node(root) for root in raw_data]
+
+        # Pretty print JSON
+        pretty_json = json.dumps(cleaned_data, indent=4, ensure_ascii=False)
+        
+        # Optional: Add color to keys for better readability
+        colored_json = pretty_json
+        colored_json = colored_json.replace('"node_id":', f'{ColorSetup.CYAN}"node_id":{ColorSetup.RESET}')
+        colored_json = colored_json.replace('"title":', f'{ColorSetup.GREEN}"title":{ColorSetup.RESET}')
+        colored_json = colored_json.replace('"summary":', f'{ColorSetup.YELLOW}"summary":{ColorSetup.RESET}')
+        colored_json = colored_json.replace('"content":', f'{ColorSetup.MAGENTA}"content":{ColorSetup.RESET}')
+        colored_json = colored_json.replace('"nodes":', f'{ColorSetup.BLUE}"nodes":{ColorSetup.RESET}')
+
+        print(colored_json)
+
+        _hr("═", ColorSetup.CYAN)
+        print(f" {ColorSetup.GREEN}✓ Full hierarchical JSON tree displayed | "
+            f"Content truncated to ~{truncate_words} words{ColorSetup.RESET}\n")
 
     def log(self, message: str) -> None:
         self.trace.append(f"{time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())} - {message}")

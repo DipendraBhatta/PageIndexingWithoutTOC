@@ -1,6 +1,6 @@
 
 import json
-# ── ANSI palette ─────────────────────────────────────────────────────────────
+
 class ColorSetup:
     RESET   = "\033[0m"
     BOLD    = "\033[1m"
@@ -71,7 +71,6 @@ def _wrap(text: str, max_w: int):
     if cur:
         lines.append(" ".join(cur))
     return lines
-
 
 def display_welcome_info(self):
     """Clean, single-border welcome message"""

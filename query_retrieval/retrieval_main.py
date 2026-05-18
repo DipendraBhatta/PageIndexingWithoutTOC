@@ -7,12 +7,14 @@ def main():
     print("   Vectorless • Hierarchical • Fully Transparent Retrieval")
     print("=" * 85)
 
-    INDEX_PATH = "Ingestion_Results/Indexing_Results/Final_Indexing.json"
+    INDEX_PATH = "ingestion_results/indexing_results/Final_Indexing.json"
 
     # Initialize RAG and the new Logger
     rag = ExplainableTreeRAG(index_path=INDEX_PATH)
     logger = SessionLogger() # This creates the folder and the .txt file
     
+    rag.display_full_json_tree(truncate_words=20)
+
     turn_count = 1
 
     print(f" Tree loaded successfully ({len(rag._title_tree.splitlines())} sections)")
